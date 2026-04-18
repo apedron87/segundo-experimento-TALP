@@ -40,6 +40,14 @@ h1 {
   margin-bottom: 1rem;
 }
 
+.class-form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: end;
+  margin-bottom: 1rem;
+}
+
 .student-form label {
   display: flex;
   flex-direction: column;
@@ -47,11 +55,44 @@ h1 {
   font-weight: 600;
 }
 
-.student-form input {
+.class-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+
+.student-form input,
+.class-form input,
+.class-form select {
   border: 1px solid #c8ced8;
   border-radius: 8px;
   padding: 0.6rem 0.75rem;
   font-size: 1rem;
+}
+
+.student-checklist {
+  grid-column: 1 / -1;
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  background: #fff;
+  padding: 0.8rem;
+}
+
+.student-checklist p {
+  margin: 0 0 0.5rem;
+  font-weight: 600;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.checkbox-row input {
+  margin: 0;
 }
 
 .form-actions {
@@ -118,7 +159,8 @@ button.danger {
 }
 
 @media (max-width: 860px) {
-  .student-form {
+  .student-form,
+  .class-form {
     grid-template-columns: 1fr;
   }
 

@@ -27,3 +27,11 @@ Funcionalidade: Gerenciamento de alunos
     E eu cadastro um aluno com nome "Pedro Alves", cpf "55544433322" e email "pedro@escola.com"
     Quando eu defino a avaliacao do aluno de cpf "55544433322" na meta "Requisitos" com conceito "MA"
     Entao o aluno de cpf "55544433322" deve ter conceito "MA" na meta "Requisitos"
+
+  Cenario: Gerenciar turma com alunos e avaliacoes
+    Dado que nao existem alunos cadastrados
+    E eu cadastro um aluno com nome "Joao Lima", cpf "10101010101" e email "joao@escola.com"
+    E eu cadastro um aluno com nome "Maria Nunes", cpf "20202020202" e email "maria@escola.com"
+    Quando eu cadastro a turma "Introducao a Programacao" no ano 2026 semestre 1 com os alunos "10101010101,20202020202"
+    E eu defino na turma "Introducao a Programacao" a avaliacao do aluno "10101010101" na meta "Testes" com conceito "MPA"
+    Entao a turma "Introducao a Programacao" deve conter o aluno "10101010101" com conceito "MPA" na meta "Testes"

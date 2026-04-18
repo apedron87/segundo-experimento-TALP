@@ -18,6 +18,31 @@ interface EvaluationResponse {
   rows: EvaluationRow[];
 }
 
+interface SchoolClass {
+  id: string;
+  topic: string;
+  year: number;
+  semester: number;
+  studentIds: string[];
+}
+
+interface ClassDetailRow {
+  studentId: string;
+  name: string;
+  cpf: string;
+  email: string;
+  evaluations: Record<string, string>;
+}
+
+interface ClassDetailResponse {
+  id: string;
+  topic: string;
+  year: number;
+  semester: number;
+  goals: string[];
+  rows: ClassDetailRow[];
+}
+
 Given('que nao existem alunos cadastrados', () => {
   resetStudentsStore();
   lastResponse = undefined;
@@ -119,6 +144,70 @@ Then(
     const table = evaluationsResponse.body as EvaluationResponse;
     const row = table.rows.find((item) => item.studentId === student.id);
     assert.ok(row, `Linha de avaliacao para aluno ${student.id} nao encontrada`);
+    assert.equal(row.evaluations[goal], concept);
+  },
+);
+
+When(
+  'eu cadastro a turma {string} no ano {int} semestre {int} com os alunos {string}',
+  async (topic: string, year: number, semester: number, cpfsCsv: string) => {
+    const cpfs = cpfsCsv.split(',').map((item) => item.trim()).filter(Boolean);
+    const studentsResponse = await api().get('/students');
+    assert.equal(studentsResponse.status, 200);
+
+    const students = studentsResponse.body as Student[];
+    const studentIds = cpfs.map((cpf) => {
+      const student = students.find((item) => item.cpf === cpf);
+      assert.ok(student, `Aluno com cpf ${cpf} nao encontrado para matricula`);
+      return student.id;
+    });
+
+    lastResponse = await api().post('/classes').send({
+      topic,
+      year,
+      semester,
+      studentIds,
+    });
+
+    assert.equal(lastResponse.status, 201);
+  },
+);
+
+When(
+  'eu defino na turma {string} a avaliacao do aluno {string} na meta {string} com conceito {string}',
+  async (topic: string, cpf: string, goal: string, concept: string) => {
+    const classesResponse = await api().get('/classes');
+    assert.equal(classesResponse.status, 200);
+    const schoolClass = (classesResponse.body as SchoolClass[]).find((item) => item.topic === topic);
+    assert.ok(schoolClass, `Turma ${topic} nao encontrada`);
+
+    const studentsResponse = await api().get('/students');
+    assert.equal(studentsResponse.status, 200);
+    const student = (studentsResponse.body as Student[]).find((item) => item.cpf === cpf);
+    assert.ok(student, `Aluno com cpf ${cpf} nao encontrado para avaliacao em turma`);
+
+    lastResponse = await api()
+      .put(`/classes/${schoolClass.id}/evaluations`)
+      .send({ studentId: student.id, goal, concept });
+
+    assert.equal(lastResponse.status, 200);
+  },
+);
+
+Then(
+  'a turma {string} deve conter o aluno {string} com conceito {string} na meta {string}',
+  async (topic: string, cpf: string, concept: string, goal: string) => {
+    const classesResponse = await api().get('/classes');
+    assert.equal(classesResponse.status, 200);
+    const schoolClass = (classesResponse.body as SchoolClass[]).find((item) => item.topic === topic);
+    assert.ok(schoolClass, `Turma ${topic} nao encontrada para verificacao`);
+
+    const detailResponse = await api().get(`/classes/${schoolClass.id}`);
+    assert.equal(detailResponse.status, 200);
+
+    const detail = detailResponse.body as ClassDetailResponse;
+    const row = detail.rows.find((item) => item.cpf === cpf);
+    assert.ok(row, `Aluno ${cpf} nao encontrado nos detalhes da turma`);
     assert.equal(row.evaluations[goal], concept);
   },
 );

@@ -1,5 +1,5 @@
 {
-  "nextId": 2,
+  "nextId": 4,
   "goals": [
     "Requisitos",
     "Testes",
@@ -8,16 +8,53 @@
   "students": [
     {
       "id": "1",
-      "name": "Pedro Alves",
-      "cpf": "55544433322",
-      "email": "pedro@escola.com"
+      "name": "Joao Lima",
+      "cpf": "10101010101",
+      "email": "joao@escola.com"
+    },
+    {
+      "id": "2",
+      "name": "Maria Nunes",
+      "cpf": "20202020202",
+      "email": "maria@escola.com"
     }
   ],
   "evaluations": {
     "1": {
-      "Requisitos": "MA",
-      "Testes": "MPA",
-      "Documentacao": "MPA"
+      "Requisitos": "MANA",
+      "Testes": "MANA",
+      "Documentacao": "MANA"
+    },
+    "2": {
+      "Requisitos": "MANA",
+      "Testes": "MANA",
+      "Documentacao": "MANA"
+    }
+  },
+  "classes": [
+    {
+      "id": "3",
+      "topic": "Introducao a Programacao",
+      "year": 2026,
+      "semester": 1,
+      "studentIds": [
+        "1",
+        "2"
+      ]
+    }
+  ],
+  "classEvaluations": {
+    "3": {
+      "1": {
+        "Requisitos": "MPA",
+        "Testes": "MPA",
+        "Documentacao": "MANA"
+      },
+      "2": {
+        "Requisitos": "MANA",
+        "Testes": "MANA",
+        "Documentacao": "MANA"
+      }
     }
   }
 }
