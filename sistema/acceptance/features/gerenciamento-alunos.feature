@@ -21,3 +21,9 @@ Funcionalidade: Gerenciamento de alunos
     E eu cadastro um aluno com nome "Marina Souza", cpf "99988877766" e email "marina@escola.com"
     Quando eu removo o aluno de cpf "99988877766"
     Entao deve existir 0 aluno cadastrado
+
+  Cenario: Gerenciar avaliacao por meta
+    Dado que nao existem alunos cadastrados
+    E eu cadastro um aluno com nome "Pedro Alves", cpf "55544433322" e email "pedro@escola.com"
+    Quando eu defino a avaliacao do aluno de cpf "55544433322" na meta "Requisitos" com conceito "MA"
+    Entao o aluno de cpf "55544433322" deve ter conceito "MA" na meta "Requisitos"

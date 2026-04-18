@@ -4,6 +4,29 @@
   padding: 2rem 1rem 3rem;
 }
 
+.top-nav {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.nav-link {
+  display: inline-block;
+  padding: 0.55rem 0.85rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  color: #1f2328;
+  border: 1px solid #c8ced8;
+  background: #fff;
+}
+
+.nav-link.active {
+  color: #fff;
+  border-color: #1f6feb;
+  background: #1f6feb;
+}
+
 h1 {
   margin: 0 0 1.5rem;
   text-align: center;
@@ -79,6 +102,14 @@ button.danger {
 
 .student-list th {
   background: #f6f8fa;
+}
+
+.student-list select {
+  width: 100%;
+  border: 1px solid #c8ced8;
+  border-radius: 6px;
+  padding: 0.4rem;
+  background: #fff;
 }
 
 .actions {

@@ -1,0 +1,23 @@
+{
+  "nextId": 2,
+  "goals": [
+    "Requisitos",
+    "Testes",
+    "Documentacao"
+  ],
+  "students": [
+    {
+      "id": "1",
+      "name": "Pedro Alves",
+      "cpf": "55544433322",
+      "email": "pedro@escola.com"
+    }
+  ],
+  "evaluations": {
+    "1": {
+      "Requisitos": "MA",
+      "Testes": "MPA",
+      "Documentacao": "MPA"
+    }
+  }
+}
