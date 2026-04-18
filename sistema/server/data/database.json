@@ -8,15 +8,9 @@
   "students": [
     {
       "id": "1",
-      "name": "Joao Lima",
-      "cpf": "10101010101",
-      "email": "joao@escola.com"
-    },
-    {
-      "id": "2",
-      "name": "Maria Nunes",
-      "cpf": "20202020202",
-      "email": "maria@escola.com"
+      "name": "Paulo Costa",
+      "cpf": "30303030303",
+      "email": "paulo@escola.com"
     }
   ],
   "evaluations": {
@@ -24,37 +18,72 @@
       "Requisitos": "MANA",
       "Testes": "MANA",
       "Documentacao": "MANA"
-    },
-    "2": {
-      "Requisitos": "MANA",
-      "Testes": "MANA",
-      "Documentacao": "MANA"
     }
   },
   "classes": [
     {
-      "id": "3",
-      "topic": "Introducao a Programacao",
+      "id": "2",
+      "topic": "Algoritmos",
       "year": 2026,
       "semester": 1,
       "studentIds": [
-        "1",
-        "2"
+        "1"
+      ]
+    },
+    {
+      "id": "3",
+      "topic": "Banco de Dados",
+      "year": 2026,
+      "semester": 1,
+      "studentIds": [
+        "1"
       ]
     }
   ],
   "classEvaluations": {
-    "3": {
+    "2": {
       "1": {
         "Requisitos": "MPA",
-        "Testes": "MPA",
-        "Documentacao": "MANA"
-      },
-      "2": {
-        "Requisitos": "MANA",
         "Testes": "MANA",
         "Documentacao": "MANA"
       }
+    },
+    "3": {
+      "1": {
+        "Requisitos": "MANA",
+        "Testes": "MA",
+        "Documentacao": "MANA"
+      }
     }
-  }
+  },
+  "sentEmails": [
+    {
+      "id": "mail-1-2026-04-18",
+      "studentId": "1",
+      "to": "paulo@escola.com",
+      "date": "2026-04-18",
+      "subject": "Atualizacoes de avaliacoes - 2026-04-18",
+      "body": "Ola, Paulo Costa.\nAs seguintes avaliacoes foram preenchidas/alteradas em 2026-04-18:\n\n- [Turma Algoritmos (2026/1)] Requisitos: MPA\n- [Turma Banco de Dados (2026/1)] Testes: MA",
+      "changes": [
+        {
+          "context": "class",
+          "classId": "2",
+          "classTopic": "Algoritmos",
+          "classYear": 2026,
+          "classSemester": 1,
+          "goal": "Requisitos",
+          "concept": "MPA"
+        },
+        {
+          "context": "class",
+          "classId": "3",
+          "classTopic": "Banco de Dados",
+          "classYear": 2026,
+          "classSemester": 1,
+          "goal": "Testes",
+          "concept": "MA"
+        }
+      ]
+    }
+  ]
 }

@@ -43,6 +43,23 @@ interface ClassDetailResponse {
   rows: ClassDetailRow[];
 }
 
+interface EmailMessage {
+  id: string;
+  studentId: string;
+  to: string;
+  date: string;
+  subject: string;
+  body: string;
+}
+
+const today = (): string => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 Given('que nao existem alunos cadastrados', () => {
   resetStudentsStore();
   lastResponse = undefined;
@@ -209,5 +226,43 @@ Then(
     const row = detail.rows.find((item) => item.cpf === cpf);
     assert.ok(row, `Aluno ${cpf} nao encontrado nos detalhes da turma`);
     assert.equal(row.evaluations[goal], concept);
+  },
+);
+
+Then(
+  'deve existir {int} email enviado hoje para o aluno de cpf {string}',
+  async (quantity: number, cpf: string) => {
+    const studentsResponse = await api().get('/students');
+    assert.equal(studentsResponse.status, 200);
+
+    const student = (studentsResponse.body as Student[]).find((item) => item.cpf === cpf);
+    assert.ok(student, `Aluno com cpf ${cpf} nao encontrado para verificar emails`);
+
+    const emailsResponse = await api().get('/emails').query({ studentId: student.id, date: today() });
+    assert.equal(emailsResponse.status, 200);
+
+    const emails = emailsResponse.body as EmailMessage[];
+    assert.equal(emails.length, quantity);
+  },
+);
+
+Then(
+  'o email diario do aluno de cpf {string} deve conter os textos {string} e {string}',
+  async (cpf: string, textA: string, textB: string) => {
+    const studentsResponse = await api().get('/students');
+    assert.equal(studentsResponse.status, 200);
+
+    const student = (studentsResponse.body as Student[]).find((item) => item.cpf === cpf);
+    assert.ok(student, `Aluno com cpf ${cpf} nao encontrado para verificar conteudo do email`);
+
+    const emailsResponse = await api().get('/emails').query({ studentId: student.id, date: today() });
+    assert.equal(emailsResponse.status, 200);
+
+    const emails = emailsResponse.body as EmailMessage[];
+    assert.ok(emails.length > 0, 'Nenhum email diario encontrado para o aluno');
+
+    const body = emails[0].body;
+    assert.ok(body.includes(textA), `Email nao contem texto esperado: ${textA}`);
+    assert.ok(body.includes(textB), `Email nao contem texto esperado: ${textB}`);
   },
 );

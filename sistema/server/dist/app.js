@@ -14,12 +14,25 @@ const CONCEPT_VALUES = ['MANA', 'MPA', 'MA'];
 const normalize = (value) => value.trim();
 const isEmail = (value) => /\S+@\S+\.\S+/.test(value);
 const isConcept = (value) => CONCEPT_VALUES.includes(value);
+const formatDateKey = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
 const parseRouteId = (routeId) => {
     if (typeof routeId !== 'string') {
         return null;
     }
     const id = routeId.trim();
     return id.length > 0 ? id : null;
+};
+const parseOptionalQuery = (value) => {
+    if (typeof value !== 'string') {
+        return undefined;
+    }
+    const normalized = value.trim();
+    return normalized.length > 0 ? normalized : undefined;
 };
 const createGoalsMap = (goals) => goals.reduce((acc, goal) => {
     acc[goal] = 'MANA';
@@ -32,6 +45,7 @@ const createEmptyDatabase = () => ({
     evaluations: {},
     classes: [],
     classEvaluations: {},
+    sentEmails: [],
 });
 const ensureDatabaseFile = (dbFilePath) => {
     const folder = node_path_1.default.dirname(dbFilePath);
@@ -99,6 +113,15 @@ const normalizeDatabase = (raw) => {
             classEvaluations[schoolClass.id][studentId] = goalsMap;
         }
     }
+    const sentEmails = Array.isArray(raw.sentEmails)
+        ? raw.sentEmails.filter((item) => typeof item?.id === 'string'
+            && typeof item?.studentId === 'string'
+            && typeof item?.to === 'string'
+            && typeof item?.date === 'string'
+            && typeof item?.subject === 'string'
+            && typeof item?.body === 'string'
+            && Array.isArray(item?.changes))
+        : [];
     const nextId = typeof raw.nextId === 'number' && Number.isFinite(raw.nextId) && raw.nextId > 0
         ? raw.nextId
         : [...students.map((item) => Number(item.id) || 0), ...normalizedClasses.map((item) => Number(item.id) || 0)]
@@ -110,6 +133,7 @@ const normalizeDatabase = (raw) => {
         evaluations,
         classes: normalizedClasses,
         classEvaluations,
+        sentEmails,
     };
 };
 const readDatabase = (dbFilePath) => {
@@ -224,6 +248,64 @@ const buildClassDetail = (db, schoolClass) => {
         rows,
     };
 };
+const mergeEmailChange = (changes, nextChange) => {
+    const key = nextChange.context === 'global'
+        ? `global:${nextChange.goal}`
+        : `class:${nextChange.classId ?? ''}:${nextChange.goal}`;
+    const index = changes.findIndex((current) => {
+        const currentKey = current.context === 'global'
+            ? `global:${current.goal}`
+            : `class:${current.classId ?? ''}:${current.goal}`;
+        return currentKey === key;
+    });
+    if (index === -1) {
+        return [...changes, nextChange];
+    }
+    const updated = [...changes];
+    updated[index] = nextChange;
+    return updated;
+};
+const buildEmailBody = (studentName, date, changes) => {
+    const lines = [
+        `Ola, ${studentName}.`,
+        `As seguintes avaliacoes foram preenchidas/alteradas em ${date}:`,
+        '',
+    ];
+    for (const change of changes) {
+        if (change.context === 'global') {
+            lines.push(`- [Geral] ${change.goal}: ${change.concept}`);
+        }
+        else {
+            lines.push(`- [Turma ${change.classTopic} (${change.classYear}/${change.classSemester})] ${change.goal}: ${change.concept}`);
+        }
+    }
+    return lines.join('\n');
+};
+const registerEvaluationEmail = (db, student, change, currentDate) => {
+    const messageId = `mail-${student.id}-${currentDate}`;
+    const existingIndex = db.sentEmails.findIndex((mail) => mail.studentId === student.id && mail.date === currentDate);
+    if (existingIndex === -1) {
+        const changes = mergeEmailChange([], change);
+        db.sentEmails.push({
+            id: messageId,
+            studentId: student.id,
+            to: student.email,
+            date: currentDate,
+            subject: `Atualizacoes de avaliacoes - ${currentDate}`,
+            body: buildEmailBody(student.name, currentDate, changes),
+            changes,
+        });
+        return;
+    }
+    const existing = db.sentEmails[existingIndex];
+    const changes = mergeEmailChange(existing.changes, change);
+    db.sentEmails[existingIndex] = {
+        ...existing,
+        to: student.email,
+        changes,
+        body: buildEmailBody(student.name, currentDate, changes),
+    };
+};
 const resetStudentsStore = (dbFilePath = DEFAULT_DB_FILE) => {
     ensureDatabaseFile(dbFilePath);
     writeDatabase(dbFilePath, createEmptyDatabase());
@@ -231,6 +313,7 @@ const resetStudentsStore = (dbFilePath = DEFAULT_DB_FILE) => {
 exports.resetStudentsStore = resetStudentsStore;
 const createApp = (options) => {
     const dbFilePath = options?.dbFilePath ?? DEFAULT_DB_FILE;
+    const nowProvider = options?.nowProvider ?? (() => new Date());
     const app = (0, express_1.default)();
     app.use((0, cors_1.default)());
     app.use(express_1.default.json());
@@ -302,6 +385,7 @@ const createApp = (options) => {
         for (const schoolClass of db.classes) {
             delete db.classEvaluations[schoolClass.id]?.[id];
         }
+        db.sentEmails = db.sentEmails.filter((mail) => mail.studentId !== id);
         writeDatabase(dbFilePath, db);
         return res.status(204).send();
     });
@@ -316,7 +400,8 @@ const createApp = (options) => {
             return res.status(400).json({ message: 'id invalido' });
         }
         const db = readDatabase(dbFilePath);
-        if (!db.students.some((item) => item.id === id)) {
+        const student = db.students.find((item) => item.id === id);
+        if (!student) {
             return res.status(404).json({ message: 'aluno nao encontrado' });
         }
         const payload = req.body;
@@ -328,6 +413,7 @@ const createApp = (options) => {
         const concept = normalize(payload.concept);
         (_a = db.evaluations)[id] ?? (_a[id] = createGoalsMap(db.goals));
         db.evaluations[id][goal] = concept;
+        registerEvaluationEmail(db, student, { context: 'global', goal, concept }, formatDateKey(nowProvider()));
         writeDatabase(dbFilePath, db);
         return res.status(200).json({ studentId: id, goal, concept });
     });
@@ -436,13 +522,39 @@ const createApp = (options) => {
         if (!schoolClass.studentIds.includes(studentId)) {
             return res.status(400).json({ message: 'aluno nao matriculado na turma' });
         }
+        const student = db.students.find((item) => item.id === studentId);
+        if (!student) {
+            return res.status(404).json({ message: 'aluno nao encontrado' });
+        }
         const goal = normalize(payload.goal);
         const concept = normalize(payload.concept);
         (_a = db.classEvaluations)[id] ?? (_a[id] = {});
         (_b = db.classEvaluations[id])[studentId] ?? (_b[studentId] = createGoalsMap(db.goals));
         db.classEvaluations[id][studentId][goal] = concept;
+        registerEvaluationEmail(db, student, {
+            context: 'class',
+            classId: id,
+            classTopic: schoolClass.topic,
+            classYear: schoolClass.year,
+            classSemester: schoolClass.semester,
+            goal,
+            concept,
+        }, formatDateKey(nowProvider()));
         writeDatabase(dbFilePath, db);
         return res.status(200).json({ classId: id, studentId, goal, concept });
+    });
+    app.get('/emails', (req, res) => {
+        const db = readDatabase(dbFilePath);
+        const studentId = parseOptionalQuery(req.query.studentId);
+        const date = parseOptionalQuery(req.query.date);
+        let emails = db.sentEmails;
+        if (studentId) {
+            emails = emails.filter((mail) => mail.studentId === studentId);
+        }
+        if (date) {
+            emails = emails.filter((mail) => mail.date === date);
+        }
+        res.status(200).json(emails);
     });
     return app;
 };
